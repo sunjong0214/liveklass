@@ -56,9 +56,6 @@ public class Lecture extends BaseEntity {
 	@Column(nullable = false)
 	private LectureStatus status;
 
-	@Version
-	private Long version;
-
 	public void updateStatus(LectureStatus status) {
 		this.status = status;
 	}

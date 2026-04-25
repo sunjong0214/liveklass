@@ -9,6 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class EnrollmentRequest {
-	private Long memberId;
 	private Long lectureId;
 }
