@@ -17,14 +17,14 @@ public class MemberService {
     private final CreatorProfileRepository creatorProfileRepository;
 
     @Transactional
-    public Long join(String email, String name) {
+    public Long join(final String email, final String name) {
         validateDuplicateMember(email);
         Member member = new Member(email, name);
         return memberRepository.save(member).getId();
     }
 
     @Transactional
-    public Long registerAsCreator(Long memberId, String bio) {
+    public Long registerAsCreator(final Long memberId, final String bio) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
@@ -37,11 +37,11 @@ public class MemberService {
         return creatorProfileRepository.save(profile).getId();
     }
 
-    public boolean isCreator(Long memberId) {
+    public boolean isCreator(final Long memberId) {
         return creatorProfileRepository.findByMemberId(memberId).isPresent();
     }
 
-    private void validateDuplicateMember(String email) {
+    private void validateDuplicateMember(final String email) {
         memberRepository.findByEmail(email).ifPresent(m -> {
             throw new IllegalStateException("이미 존재하는 이메일입니다.");
         });
