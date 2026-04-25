@@ -7,6 +7,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +23,8 @@ public class Member extends BaseEntity {
 	private Long id;
 
 	@Column(nullable = false)
+	@Email
+	@NotNull
 	private String email;
 
 	@Column(nullable = false)
