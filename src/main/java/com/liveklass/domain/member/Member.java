@@ -8,7 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,17 +20,19 @@ public class Member extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "member_id")
 	private Long id;
 
-	@Column(nullable = false)
+	@NotBlank
 	@Email
-	@NotNull
+	@Column(nullable = false, unique = true)
 	private String email;
 
+	@NotBlank
 	@Column(nullable = false)
 	private String name;
 
-	public Member(String email, String name) {
+	public Member(final String email, final String name) {
 		this.email = email;
 		this.name = name;
 	}
