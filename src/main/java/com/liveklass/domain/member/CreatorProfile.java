@@ -1,13 +1,13 @@
 package com.liveklass.domain.member;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class CreatorProfile {
 
     @Id
@@ -18,4 +18,9 @@ public class CreatorProfile {
     private Long memberId;
 
     private String bio;
+
+    public CreatorProfile(final Long memberId, final String bio) {
+        this.memberId = memberId;
+        this.bio = bio;
+    }
 }
