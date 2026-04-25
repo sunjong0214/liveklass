@@ -25,20 +25,19 @@ public class MemberService {
 
     @Transactional
     public Long registerAsCreator(final Long memberId, final String bio) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        ensureMemberCanBeCreator(memberId);
+        CreatorProfile profile = new CreatorProfile(memberId, bio);
+        return creatorProfileRepository.save(profile).getId();
+    }
+
+    private void ensureMemberCanBeCreator(final Long memberId) {
+        if (!memberRepository.existsById(memberId)) {
+            throw new IllegalArgumentException("존재하지 않는 회원입니다.");
+        }
 
         creatorProfileRepository.findByMemberId(memberId).ifPresent(p -> {
             throw new IllegalStateException("이미 강사 프로필이 존재합니다.");
         });
-
-        CreatorProfile profile = new CreatorProfile(memberId, bio);
-
-        return creatorProfileRepository.save(profile).getId();
-    }
-
-    public boolean isCreator(final Long memberId) {
-        return creatorProfileRepository.findByMemberId(memberId).isPresent();
     }
 
     private void validateDuplicateMember(final String email) {
