@@ -24,7 +24,7 @@ public class MemberService {
     }
 
     @Transactional
-    public Long registerAsCreator(Long memberId, String companyName, String bankAccount, String bio) {
+    public Long registerAsCreator(Long memberId, String bio) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
@@ -32,12 +32,7 @@ public class MemberService {
             throw new IllegalStateException("이미 강사 프로필이 존재합니다.");
         });
 
-        CreatorProfile profile = CreatorProfile.builder()
-                .memberId(member.getId())
-                .companyName(companyName)
-                .bankAccount(bankAccount)
-                .bio(bio)
-                .build();
+        CreatorProfile profile = new CreatorProfile(memberId, bio);
 
         return creatorProfileRepository.save(profile).getId();
     }
