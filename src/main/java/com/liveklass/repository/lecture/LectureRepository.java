@@ -12,11 +12,18 @@ import java.util.List;
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
     List<Lecture> findByStatus(LectureStatus status);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Lecture l " +
             "SET l.currentEnrollmentCount = l.currentEnrollmentCount + 1 " +
             "WHERE l.id = :id " +
             "AND l.currentEnrollmentCount < l.maxCapacity " +
             "AND l.status = com.liveklass.domain.lecture.LectureStatus.OPEN")
     int incrementEnrollmentIfPossible(@Param("id") Long id);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Lecture l " +
+            "SET l.currentEnrollmentCount = l.currentEnrollmentCount - 1 " +
+            "WHERE l.id = :id " +
+            "AND l.currentEnrollmentCount > 0 ")
+    int decrementEnrollmentIfPossible(@Param("id") Long id);
 }

@@ -76,12 +76,13 @@ public class LectureService {
 		}
 	}
 
-	/*
-		todo: 동시성 문제 해결 필요
-	 */
 	@Transactional
 	public void releaseSlot(final Long lectureId) {
-		Lecture lecture = getLecture(lectureId);
-		lecture.decrementEnrollment();
+		int updatedCount = lectureRepository.decrementEnrollmentIfPossible(lectureId);
+
+		if (updatedCount == 0) {
+			Lecture lecture = getLecture(lectureId);
+			lecture.validateRelease();
+		}
 	}
 }

@@ -56,6 +56,12 @@ public class Lecture extends BaseEntity {
         }
     }
 
+    public void validateRelease() {
+        if (this.currentEnrollmentCount <= 0) {
+            throw new IllegalStateException("취소할 수강 내역이 없습니다.");
+        }
+    }
+
     public void decrementEnrollment() {
         if (currentEnrollmentCount > 0) {
             this.currentEnrollmentCount--;
