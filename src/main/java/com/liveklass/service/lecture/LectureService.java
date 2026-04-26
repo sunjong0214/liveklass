@@ -19,6 +19,9 @@ public class LectureService {
 
 	private final LectureRepository lectureRepository;
 
+	/*
+		todo: 덜 개발
+	 */
 	@Transactional
 	public Long createLecture(final Long creatorId, final LectureCreateRequest request) {
 		Lecture lecture = Lecture.builder()
@@ -36,6 +39,9 @@ public class LectureService {
 		return lectureRepository.save(lecture).getId();
 	}
 
+	/*
+		todo: 덜 개발
+	 */
 	@Transactional
 	public void updateStatus(final Long lectureId, final LectureStatus status) {
 		Lecture lecture = lectureRepository.findById(lectureId)
@@ -43,6 +49,10 @@ public class LectureService {
 		lecture.updateStatus(status);
 	}
 
+
+	/*
+		todo: 덜 개발
+	 */
 	public List<Lecture> findLectures(final LectureStatus status) {
 		if (status == null) {
 			return lectureRepository.findAll();
@@ -50,8 +60,40 @@ public class LectureService {
 		return lectureRepository.findByStatus(status);
 	}
 
+	/*
+		todo: 덜 개발
+	 */
 	public Lecture getLecture(final Long lectureId) {
 		return lectureRepository.findById(lectureId)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+	}
+
+	@Transactional
+	public void occupySlot(final Long lectureId) {
+		int updatedCount = lectureRepository.incrementEnrollmentIfPossible(lectureId);
+
+		if (updatedCount == 0) {
+			validateOccupancyFailure(lectureId);
+		}
+	}
+
+	@Transactional
+	public void releaseSlot(final Long lectureId) {
+		Lecture lecture = lectureRepository.findById(lectureId)
+			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+		lecture.decrementEnrollment();
+	}
+
+	private void validateOccupancyFailure(final Long lectureId) {
+		Lecture lecture = lectureRepository.findById(lectureId)
+			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+
+		if (lecture.getStatus() != LectureStatus.OPEN) {
+			throw new IllegalStateException("수강 신청이 불가능한 강의 상태입니다.");
+		}
+
+		if (lecture.getCurrentEnrollmentCount() >= lecture.getMaxCapacity()) {
+			throw new IllegalStateException("수강 정원이 초과되었습니다.");
+		}
 	}
 }
