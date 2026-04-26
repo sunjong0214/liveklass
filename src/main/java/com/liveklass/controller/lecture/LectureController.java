@@ -3,6 +3,7 @@ package com.liveklass.controller.lecture;
 import com.liveklass.controller.lecture.dto.LectureCreateRequest;
 import com.liveklass.controller.lecture.dto.LectureDetailResponse;
 import com.liveklass.controller.lecture.dto.LectureResponse;
+import com.liveklass.controller.lecture.dto.LectureStudentResponse;
 import com.liveklass.domain.lecture.LectureStatus;
 import com.liveklass.service.lecture.LectureService;
 import lombok.RequiredArgsConstructor;
@@ -38,5 +39,14 @@ public class LectureController {
     @GetMapping("/{lectureId}")
     public ResponseEntity<LectureDetailResponse> getLecture(@PathVariable final Long lectureId) {
         return ResponseEntity.ok(lectureService.getLecture(lectureId));
+    }
+
+    @GetMapping("/{lectureId}/students")
+    public ResponseEntity<Page<LectureStudentResponse>> getLectureStudents(
+            @RequestHeader("X-Creator-Id") final Long creatorId,
+            @PathVariable final Long lectureId,
+            @PageableDefault(size = 10) final Pageable pageable
+    ) {
+        return ResponseEntity.ok(lectureService.getLectureStudents(creatorId, lectureId, pageable));
     }
 }

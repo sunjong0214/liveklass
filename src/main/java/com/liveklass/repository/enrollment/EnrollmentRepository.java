@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     Page<Enrollment> findByMemberId(Long memberId, Pageable pageable);
+    Page<Enrollment> findByLectureId(Long lectureId, Pageable pageable);
 }
