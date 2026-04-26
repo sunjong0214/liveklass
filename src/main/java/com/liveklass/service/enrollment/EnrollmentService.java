@@ -1,15 +1,17 @@
 package com.liveklass.service.enrollment;
 
+import com.liveklass.controller.enrollment.dto.EnrollmentResponse;
 import com.liveklass.domain.enrollment.Enrollment;
 import com.liveklass.domain.enrollment.EnrollmentStatus;
 import com.liveklass.repository.enrollment.EnrollmentRepository;
 import com.liveklass.service.lecture.LectureService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -50,7 +52,8 @@ public class EnrollmentService {
         lectureService.releaseSlot(enrollment.getLectureId());
     }
 
-    public List<Enrollment> getMyEnrollments(final Long memberId) {
-        return enrollmentRepository.findByMemberId(memberId);
+    public Page<EnrollmentResponse> getMyEnrollments(final Long memberId, final Pageable pageable) {
+        return enrollmentRepository.findByMemberId(memberId, pageable)
+                .map(EnrollmentResponse::new);
     }
 }
