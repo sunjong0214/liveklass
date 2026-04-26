@@ -1,6 +1,5 @@
 package com.liveklass.service.lecture;
 
-import com.liveklass.controller.dto.CursorPageResponse;
 import com.liveklass.controller.lecture.dto.LectureCreateRequest;
 import com.liveklass.controller.lecture.dto.LectureDetailResponse;
 import com.liveklass.controller.lecture.dto.LectureResponse;
@@ -8,13 +7,10 @@ import com.liveklass.domain.lecture.Lecture;
 import com.liveklass.domain.lecture.LectureStatus;
 import com.liveklass.repository.lecture.LectureRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -40,38 +36,11 @@ public class LectureService {
         return lectureRepository.save(lecture).getId();
     }
 
-    public CursorPageResponse<LectureResponse> findLectures(
-            final LectureStatus status,
-            final LocalDateTime lastCreatedAt,
-            final Long lastId,
-            final int size) {
-
-        PageRequest pageRequest = PageRequest.of(0, size + 1);
-
-        List<Lecture> lectures = null;
+    public Page<LectureResponse> findLectures(final LectureStatus status, final Pageable pageable) {
         if (status == null) {
-            lectures = lectureRepository.findLecturesWithoutStatus(lastCreatedAt, lastId, pageRequest);
-        } else {
-            lectures = lectureRepository.findLectures(status, lastCreatedAt, lastId, pageRequest);
+            return lectureRepository.findAll(pageable).map(LectureResponse::new);
         }
-
-        boolean hasNext = lectures.size() > size;
-        List<Lecture> content = hasNext ? lectures.subList(0, size) : lectures;
-
-        LocalDateTime nextCursorCreatedAt = null;
-        Long nextCursorId = null;
-
-        if (!content.isEmpty()) {
-            Lecture lastLecture = content.get(content.size() - 1);
-            nextCursorCreatedAt = lastLecture.getCreatedAt();
-            nextCursorId = lastLecture.getId();
-        }
-
-        List<LectureResponse> responses = content.stream()
-                .map(LectureResponse::new)
-                .collect(Collectors.toList());
-
-        return new CursorPageResponse<>(responses, nextCursorCreatedAt, nextCursorId, hasNext);
+        return lectureRepository.findByStatus(status, pageable).map(LectureResponse::new);
     }
 
     public LectureDetailResponse getLecture(final Long lectureId) {

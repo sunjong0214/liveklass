@@ -47,7 +47,6 @@ public class Lecture extends BaseEntity {
     @Column(nullable = false)
     private LectureStatus status;
 
-
     public void validateOccupancy() {
         if (this.status != LectureStatus.OPEN) {
             throw new IllegalStateException("수강 신청이 불가능한 강의 상태입니다.");
