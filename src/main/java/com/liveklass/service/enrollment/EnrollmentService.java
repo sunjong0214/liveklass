@@ -38,10 +38,6 @@ public class EnrollmentService {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수강 신청 내역입니다."));
 
-        if (enrollment.getStatus() != EnrollmentStatus.PENDING) {
-            throw new IllegalStateException("결제 대기 상태인 경우에만 확정이 가능합니다.");
-        }
-
         enrollment.confirm();
     }
 
@@ -49,10 +45,6 @@ public class EnrollmentService {
     public void cancelEnrollment(final Long enrollmentId) {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수강 신청 내역입니다."));
-
-        if (enrollment.getStatus() == EnrollmentStatus.CANCELLED) {
-            throw new IllegalStateException("이미 취소된 신청입니다.");
-        }
 
         enrollment.cancel();
         lectureService.releaseSlot(enrollment.getLectureId());

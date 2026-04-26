@@ -60,9 +60,7 @@ public class LectureService {
 		return lectureRepository.findByStatus(status);
 	}
 
-	/*
-		todo: 덜 개발
-	 */
+	@Transactional
 	public Lecture getLecture(final Long lectureId) {
 		return lectureRepository.findById(lectureId)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
@@ -73,27 +71,17 @@ public class LectureService {
 		int updatedCount = lectureRepository.incrementEnrollmentIfPossible(lectureId);
 
 		if (updatedCount == 0) {
-			validateOccupancyFailure(lectureId);
+			Lecture lecture = getLecture(lectureId);
+			lecture.validateOccupancy();
 		}
 	}
 
+	/*
+		todo: 동시성 문제 해결 필요
+	 */
 	@Transactional
 	public void releaseSlot(final Long lectureId) {
-		Lecture lecture = lectureRepository.findById(lectureId)
-			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+		Lecture lecture = getLecture(lectureId);
 		lecture.decrementEnrollment();
-	}
-
-	private void validateOccupancyFailure(final Long lectureId) {
-		Lecture lecture = lectureRepository.findById(lectureId)
-			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
-
-		if (lecture.getStatus() != LectureStatus.OPEN) {
-			throw new IllegalStateException("수강 신청이 불가능한 강의 상태입니다.");
-		}
-
-		if (lecture.getCurrentEnrollmentCount() >= lecture.getMaxCapacity()) {
-			throw new IllegalStateException("수강 정원이 초과되었습니다.");
-		}
 	}
 }
