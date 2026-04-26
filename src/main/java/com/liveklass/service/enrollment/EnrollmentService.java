@@ -2,9 +2,8 @@ package com.liveklass.service.enrollment;
 
 import com.liveklass.domain.enrollment.Enrollment;
 import com.liveklass.domain.enrollment.EnrollmentStatus;
-import com.liveklass.domain.lecture.Lecture;
 import com.liveklass.repository.enrollment.EnrollmentRepository;
-import com.liveklass.repository.lecture.LectureRepository;
+import com.liveklass.service.lecture.LectureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,16 +17,11 @@ import java.util.List;
 public class EnrollmentService {
 
     private final EnrollmentRepository enrollmentRepository;
-    private final LectureRepository lectureRepository;
+    private final LectureService lectureService;
 
     @Transactional
     public Long enroll(final Long memberId, final Long lectureId) {
-
-        int updatedLectureCnt = lectureRepository.incrementEnrollmentIfPossible(lectureId);
-
-        if (updatedLectureCnt == 0) {
-            throw new IllegalStateException("수강 신청이 불가능한 강의이거나 정원이 초과되었습니다.");
-        }
+        lectureService.occupySlot(lectureId);
 
         Enrollment enrollment = Enrollment.builder()
                 .memberId(memberId)
@@ -61,10 +55,7 @@ public class EnrollmentService {
         }
 
         enrollment.cancel();
-
-        Lecture lecture = lectureRepository.findById(enrollment.getLectureId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
-        lecture.decrementEnrollment();
+        lectureService.releaseSlot(enrollment.getLectureId());
     }
 
     public List<Enrollment> getMyEnrollments(final Long memberId) {
