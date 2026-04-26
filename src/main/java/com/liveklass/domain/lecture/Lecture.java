@@ -12,9 +12,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(indexes = {
-    @Index(name = "idx_lecture_status_createdat", columnList = "status, createdAt, lecture_id DESC"),
-    @Index(name = "idx_lecture_createdat", columnList = "createdAt DESC, lecture_id DESC")
-})public class Lecture extends BaseEntity {
+        @Index(name = "idx_lecture_status_createdat", columnList = "status, createdAt, lecture_id DESC"),
+        @Index(name = "idx_lecture_createdat", columnList = "createdAt DESC, lecture_id DESC")
+})
+public class Lecture extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,9 +47,6 @@ import java.time.LocalDateTime;
     @Column(nullable = false)
     private LectureStatus status;
 
-    public void updateStatus(LectureStatus status) {
-        this.status = status;
-    }
 
     public void validateOccupancy() {
         if (this.status != LectureStatus.OPEN) {

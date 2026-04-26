@@ -40,13 +40,6 @@ public class LectureService {
         return lectureRepository.save(lecture).getId();
     }
 
-    @Transactional
-    public void updateStatus(final Long lectureId, final LectureStatus status) {
-        Lecture lecture = lectureRepository.findById(lectureId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
-        lecture.updateStatus(status);
-    }
-
     public CursorPageResponse<LectureResponse> findLectures(
             final LectureStatus status,
             final LocalDateTime lastCreatedAt,

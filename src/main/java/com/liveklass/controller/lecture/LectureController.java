@@ -28,15 +28,6 @@ public class LectureController {
         return ResponseEntity.ok(lectureService.createLecture(creatorId, request));
     }
 
-    @PatchMapping("/{lectureId}/status")
-    public ResponseEntity<Void> updateStatus(
-            @PathVariable final Long lectureId,
-            @RequestParam final LectureStatus status
-    ) {
-        lectureService.updateStatus(lectureId, status);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping
     public ResponseEntity<CursorPageResponse<LectureResponse>> findLectures(
             @RequestParam(required = false) final LectureStatus status,
