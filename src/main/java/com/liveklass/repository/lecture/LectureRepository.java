@@ -2,15 +2,25 @@ package com.liveklass.repository.lecture;
 
 import com.liveklass.domain.lecture.Lecture;
 import com.liveklass.domain.lecture.LectureStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
-    List<Lecture> findByStatus(LectureStatus status);
+    @Query("SELECT l FROM Lecture l " +
+            "WHERE l.status = :status " +
+            "AND (:lastCreatedAt IS NULL OR l.createdAt < :lastCreatedAt OR (l.createdAt = :lastCreatedAt AND l.id < :lastId)) " +
+            "ORDER BY l.createdAt DESC, l.id DESC")
+    List<Lecture> findByStatusWithCursor(
+            @Param("status") LectureStatus status,
+            @Param("lastCreatedAt") LocalDateTime lastCreatedAt,
+            @Param("lastId") Long lastId,
+            Pageable pageable);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Lecture l " +

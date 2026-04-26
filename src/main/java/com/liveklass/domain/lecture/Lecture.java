@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Table(indexes = {
+        @Index(name = "idx_lecture_status_createdat", columnList = "status, createdAt, lecture_id DESC")
+})
 public class Lecture extends BaseEntity {
 
     @Id
