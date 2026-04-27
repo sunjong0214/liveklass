@@ -12,7 +12,6 @@ import com.liveklass.repository.enrollment.EnrollmentRepository;
 import com.liveklass.repository.enrollment.WaitlistRepository;
 import com.liveklass.repository.lecture.LectureRepository;
 import com.liveklass.repository.member.MemberRepository;
-import com.liveklass.service.lecture.LectureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
