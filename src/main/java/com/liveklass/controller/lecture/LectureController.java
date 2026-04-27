@@ -33,7 +33,7 @@ public class LectureController {
     @GetMapping
     public ResponseEntity<Page<LectureResponse>> findLectures(
             @RequestParam(required = false) final LectureStatus status,
-            @PageableDefault(size = 10, sort = "createdAt") final Pageable pageable
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) final Pageable pageable
     ) {
         return ResponseEntity.ok(lectureService.findLectures(status, pageable));
     }
