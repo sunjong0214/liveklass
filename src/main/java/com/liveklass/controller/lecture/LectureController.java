@@ -6,6 +6,7 @@ import com.liveklass.controller.lecture.dto.LectureResponse;
 import com.liveklass.controller.lecture.dto.LectureStudentResponse;
 import com.liveklass.domain.lecture.LectureStatus;
 import com.liveklass.service.lecture.LectureService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,9 +24,18 @@ public class LectureController {
     @PostMapping
     public ResponseEntity<Long> createLecture(
             @RequestHeader("X-Creator-Id") final Long creatorId,
-            @RequestBody final LectureCreateRequest request
+            @RequestBody @Valid final LectureCreateRequest request
     ) {
         return ResponseEntity.ok(lectureService.createLecture(creatorId, request));
+    }
+
+    @PatchMapping("/{lectureId}/status")
+    public ResponseEntity<Void> updateStatus(
+            @PathVariable final Long lectureId,
+            @RequestParam final LectureStatus status
+    ) {
+        lectureService.updateStatus(lectureId, status);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping

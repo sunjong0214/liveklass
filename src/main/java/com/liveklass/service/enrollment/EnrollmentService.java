@@ -33,6 +33,11 @@ public class EnrollmentService {
     @Transactional
     public Long enroll(final Long memberId, final Long lectureId) {
         validateMember(memberId);
+
+        if (enrollmentRepository.findByMemberIdAndLectureIdAndStatusNot(memberId, lectureId, EnrollmentStatus.CANCELLED).isPresent()) {
+            throw new BusinessException("이미 수강 신청된 강의입니다.", ErrorCode.INVALID_INPUT_VALUE);
+        }
+
         try {
             lectureService.occupySlot(lectureId);
             return saveEnrollment(memberId, lectureId, EnrollmentStatus.PENDING).getId();

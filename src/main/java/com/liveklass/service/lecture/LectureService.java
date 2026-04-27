@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +41,9 @@ public class LectureService {
         if (!memberRepository.existsById(creatorId)) {
             throw new EntityNotFoundException(ErrorCode.MEMBER_NOT_FOUND);
         }
+        
+        validateLectureDates(request.getStartDate(), request.getEndDate());
+
         Lecture lecture = Lecture.builder()
                 .creatorId(creatorId)
                 .title(request.getTitle())
@@ -118,6 +122,12 @@ public class LectureService {
             Lecture lecture = lectureRepository.findById(lectureId)
                     .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
             lecture.validateRelease();
+        }
+    }
+
+    private void validateLectureDates(final LocalDateTime startDate, final LocalDateTime endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new BusinessException("강의 시작일은 종료일보다 빨라야 합니다.", ErrorCode.INVALID_INPUT_VALUE);
         }
     }
 }
