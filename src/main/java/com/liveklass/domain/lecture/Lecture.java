@@ -40,6 +40,7 @@ public class Lecture extends BaseEntity {
     @Column(nullable = false)
     private Integer maxCapacity;
 
+    @Builder.Default
     private Integer currentEnrollmentCount = 0;
 
     private LocalDateTime startDate;
@@ -53,9 +54,6 @@ public class Lecture extends BaseEntity {
         if (this.status != LectureStatus.OPEN) {
             throw new BusinessException(ErrorCode.INVALID_LECTURE_STATUS);
         }
-        if (this.currentEnrollmentCount >= this.maxCapacity) {
-            throw new BusinessException(ErrorCode.LECTURE_CAPACITY_EXCEEDED);
-        }
     }
 
     public void validateRelease() {
@@ -64,12 +62,6 @@ public class Lecture extends BaseEntity {
         }
         if (this.currentEnrollmentCount <= 0) {
             throw new BusinessException("취소할 수강 내역이 없습니다.", ErrorCode.INVALID_INPUT_VALUE);
-        }
-    }
-
-    public void decrementEnrollment() {
-        if (currentEnrollmentCount > 0) {
-            this.currentEnrollmentCount--;
         }
     }
 }

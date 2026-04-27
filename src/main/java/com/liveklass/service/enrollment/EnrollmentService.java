@@ -4,11 +4,13 @@ import com.liveklass.controller.enrollment.dto.EnrollmentResponse;
 import com.liveklass.domain.enrollment.Enrollment;
 import com.liveklass.domain.enrollment.EnrollmentStatus;
 import com.liveklass.domain.enrollment.Waitlist;
+import com.liveklass.domain.lecture.Lecture;
 import com.liveklass.exception.BusinessException;
 import com.liveklass.exception.EntityNotFoundException;
 import com.liveklass.exception.ErrorCode;
 import com.liveklass.repository.enrollment.EnrollmentRepository;
 import com.liveklass.repository.enrollment.WaitlistRepository;
+import com.liveklass.repository.lecture.LectureRepository;
 import com.liveklass.repository.member.MemberRepository;
 import com.liveklass.service.lecture.LectureService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -29,24 +32,32 @@ public class EnrollmentService {
     private final EnrollmentRepository enrollmentRepository;
     private final WaitlistRepository waitlistRepository;
     private final MemberRepository memberRepository;
-    private final LectureService lectureService;
+    private final LectureRepository lectureRepository;
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Long enroll(final Long memberId, final Long lectureId) {
         validateMember(memberId);
 
+        int updated = lectureRepository.incrementEnrollmentIfPossible(lectureId);
+
+        if (updated == 0) {
+            return handleFailedOccupy(memberId, lectureId);
+        }
+
         try {
-            lectureService.occupySlot(lectureId);
             return saveEnrollment(memberId, lectureId, EnrollmentStatus.PENDING).getId();
         } catch (DataIntegrityViolationException e) {
-            // 유니크 제약 위반 → 중복 신청 (동시성 방어)
             throw new BusinessException("이미 수강 신청된 강의입니다.", ErrorCode.INVALID_INPUT_VALUE);
-        } catch (BusinessException e) {
-            if (e.getErrorCode() == ErrorCode.LECTURE_CAPACITY_EXCEEDED) {
-                return addToWaitlist(memberId, lectureId);
-            }
-            throw e;
         }
+    }
+
+    private Long handleFailedOccupy(Long memberId, Long lectureId) {
+        Lecture lecture = lectureRepository.findById(lectureId)
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
+
+        lecture.validateOccupancy();
+
+        return addToWaitlist(memberId, lectureId);
     }
 
     private Enrollment saveEnrollment(Long memberId, Long lectureId, EnrollmentStatus status) {
@@ -60,9 +71,15 @@ public class EnrollmentService {
     }
 
     private Long addToWaitlist(Long memberId, Long lectureId) {
+        if (enrollmentRepository.findByMemberIdAndLectureIdAndStatusNot(
+                memberId, lectureId, EnrollmentStatus.CANCELLED).isPresent()) {
+            throw new BusinessException("이미 수강 신청된 강의입니다.", ErrorCode.INVALID_INPUT_VALUE);
+        }
+
         if (waitlistRepository.existsByMemberIdAndLectureId(memberId, lectureId)) {
             throw new BusinessException("이미 대기열에 등록된 강의입니다.", ErrorCode.INVALID_INPUT_VALUE);
         }
+
         try {
             Waitlist waitlist = new Waitlist(memberId, lectureId);
             return waitlistRepository.save(waitlist).getId();
@@ -90,7 +107,13 @@ public class EnrollmentService {
         if (firstWaiting.isPresent()) {
             promoteFromWaitlist(firstWaiting.get());
         } else {
-            lectureService.releaseSlot(enrollment.getLectureId());
+            int updatedCount = lectureRepository.decrementEnrollmentIfPossible(enrollment.getLectureId());
+
+            if (updatedCount == 0) {
+                Lecture lecture = lectureRepository.findById(enrollment.getLectureId())
+                        .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
+                lecture.validateRelease();
+            }
         }
     }
 

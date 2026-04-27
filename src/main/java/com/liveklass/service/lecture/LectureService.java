@@ -103,28 +103,6 @@ public class LectureService {
         return new PageImpl<>(responses, pageable, enrollmentPage.getTotalElements());
     }
 
-    @Transactional
-    public void occupySlot(final Long lectureId) {
-        int updatedCount = lectureRepository.incrementEnrollmentIfPossible(lectureId);
-
-        if (updatedCount == 0) {
-            Lecture lecture = lectureRepository.findById(lectureId)
-                    .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
-            lecture.validateOccupancy();
-        }
-    }
-
-    @Transactional
-    public void releaseSlot(final Long lectureId) {
-        int updatedCount = lectureRepository.decrementEnrollmentIfPossible(lectureId);
-
-        if (updatedCount == 0) {
-            Lecture lecture = lectureRepository.findById(lectureId)
-                    .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
-            lecture.validateRelease();
-        }
-    }
-
     private void validateLectureDates(final LocalDateTime startDate, final LocalDateTime endDate) {
         if (startDate.isAfter(endDate)) {
             throw new BusinessException("강의 시작일은 종료일보다 빨라야 합니다.", ErrorCode.INVALID_INPUT_VALUE);

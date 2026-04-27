@@ -9,6 +9,14 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_waitlist_member_lecture",
+                        columnNames = {"member_id", "lecture_id"}
+                )
+        }
+)
 public class Waitlist extends BaseEntity {
 
     @Id
