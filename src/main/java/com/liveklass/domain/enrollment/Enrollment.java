@@ -14,55 +14,55 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(
-	uniqueConstraints = {
-		@UniqueConstraint(
-			name = "uk_enrollment_member_lecture",
-			columnNames = {"memberId", "lectureId"}
-		)
-	}
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_enrollment_member_lecture",
+                        columnNames = {"memberId", "lectureId"}
+                )
+        }
 )
 public class Enrollment extends BaseEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Column(nullable = false)
-	private Long memberId;
+    @Column(nullable = false)
+    private Long memberId;
 
-	@Column(nullable = false)
-	private Long lectureId;
+    @Column(nullable = false)
+    private Long lectureId;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private EnrollmentStatus status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EnrollmentStatus status;
 
-	private LocalDateTime enrolledAt;
+    private LocalDateTime enrolledAt;
 
-	private LocalDateTime paymentAt;
+    private LocalDateTime paymentAt;
 
-	public void cancel() {
-		if (this.status == EnrollmentStatus.CANCELLED) {
-			throw new BusinessException(ErrorCode.ALREADY_CANCELLED);
-		}
-		if (!canCancel()) {
-			throw new BusinessException(ErrorCode.CANCELLATION_PERIOD_EXCEEDED);
-		}
-		this.status = EnrollmentStatus.CANCELLED;
-	}
+    public void cancel() {
+        if (this.status == EnrollmentStatus.CANCELLED) {
+            throw new BusinessException(ErrorCode.ALREADY_CANCELLED);
+        }
+        if (!canCancel()) {
+            throw new BusinessException(ErrorCode.CANCELLATION_PERIOD_EXCEEDED);
+        }
+        this.status = EnrollmentStatus.CANCELLED;
+    }
 
-	public void confirm() {
-		if (this.status != EnrollmentStatus.PENDING) {
-			throw new BusinessException(ErrorCode.INVALID_CONFIRMATION_STATE);
-		}
-		this.status = EnrollmentStatus.CONFIRMED;
-		this.paymentAt = LocalDateTime.now();
-	}
+    public void confirm() {
+        if (this.status != EnrollmentStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_CONFIRMATION_STATE);
+        }
+        this.status = EnrollmentStatus.CONFIRMED;
+        this.paymentAt = LocalDateTime.now();
+    }
 
-	private boolean canCancel() {
-		if (this.paymentAt == null) {
-			return true;
-		}
-		return LocalDateTime.now().isBefore(this.paymentAt.plusDays(7));
-	}
+    private boolean canCancel() {
+        if (this.paymentAt == null) {
+            return true;
+        }
+        return LocalDateTime.now().isBefore(this.paymentAt.plusDays(7));
+    }
 }

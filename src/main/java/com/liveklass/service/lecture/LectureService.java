@@ -41,7 +41,7 @@ public class LectureService {
         if (!memberRepository.existsById(creatorId)) {
             throw new EntityNotFoundException(ErrorCode.MEMBER_NOT_FOUND);
         }
-        
+
         validateLectureDates(request.getStartDate(), request.getEndDate());
 
         Lecture lecture = Lecture.builder()
