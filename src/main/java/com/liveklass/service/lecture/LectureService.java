@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -62,6 +63,9 @@ public class LectureService {
         return new LectureDetailResponse(lecture);
     }
 
+    /*
+        todo: 코드 최적화 필요
+     */
     public Page<LectureStudentResponse> getLectureStudents(final Long creatorId, final Long lectureId, final Pageable pageable) {
         Lecture lecture = lectureRepository.findById(lectureId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
@@ -93,7 +97,7 @@ public class LectureService {
         return new PageImpl<>(responses, pageable, enrollmentPage.getTotalElements());
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void occupySlot(final Long lectureId) {
         int updatedCount = lectureRepository.incrementEnrollmentIfPossible(lectureId);
 

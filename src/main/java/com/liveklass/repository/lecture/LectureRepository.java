@@ -9,7 +9,16 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+import java.util.Optional;
+
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
+    
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT l FROM Lecture l WHERE l.id = :id")
+    Optional<Lecture> findByIdWithLock(@Param("id") Long id);
+
     Page<Lecture> findByStatus(LectureStatus status, Pageable pageable);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -24,7 +33,6 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Query("UPDATE Lecture l " +
             "SET l.currentEnrollmentCount = l.currentEnrollmentCount - 1 " +
             "WHERE l.id = :id " +
-            "AND l.currentEnrollmentCount > 0 " +
-            "AND l.status = com.liveklass.domain.lecture.LectureStatus.OPEN")
+            "AND l.currentEnrollmentCount > 0 ")
     int decrementEnrollmentIfPossible(@Param("id") Long id);
 }
