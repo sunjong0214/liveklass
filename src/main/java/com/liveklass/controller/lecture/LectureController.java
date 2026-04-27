@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,7 @@ public class LectureController {
     public ResponseEntity<Page<LectureStudentResponse>> getLectureStudents(
             @RequestHeader("X-Creator-Id") final Long creatorId,
             @PathVariable final Long lectureId,
-            @PageableDefault(size = 10) final Pageable pageable
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) final Pageable pageable
     ) {
         return ResponseEntity.ok(lectureService.getLectureStudents(creatorId, lectureId, pageable));
     }

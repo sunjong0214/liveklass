@@ -63,7 +63,7 @@ public class LectureService {
         if (status == null) {
             return lectureRepository.findAll(pageable).map(LectureResponse::new);
         }
-        return lectureRepository.findByStatus(status, pageable).map(LectureResponse::new);
+        return lectureRepository.findByStatusOrderByCreatedAtDesc(status, pageable).map(LectureResponse::new);
     }
 
     public LectureDetailResponse getLecture(final Long lectureId) {

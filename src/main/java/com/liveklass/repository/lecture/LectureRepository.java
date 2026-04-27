@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
 
-    Page<Lecture> findByStatus(LectureStatus status, Pageable pageable);
+    Page<Lecture> findByStatusOrderByCreatedAtDesc(LectureStatus status, Pageable pageable);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Lecture l " +

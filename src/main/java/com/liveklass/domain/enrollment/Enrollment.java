@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
                         name = "uk_enrollment_member_lecture",
                         columnNames = {"member_id", "lecture_id"}
                 )
+        },
+        indexes = {
+                @Index(name = "idx_enrollment_lecture_createdat", columnList = "status, createdAt, lecture_id DESC")
         }
 )
 public class Enrollment extends BaseEntity {
