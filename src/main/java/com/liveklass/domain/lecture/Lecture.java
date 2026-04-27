@@ -1,6 +1,8 @@
 package com.liveklass.domain.lecture;
 
 import com.liveklass.domain.BaseEntity;
+import com.liveklass.exception.BusinessException;
+import com.liveklass.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,8 +14,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(indexes = {
-        @Index(name = "idx_lecture_status_createdat", columnList = "status, createdAt, lecture_id DESC"),
-        @Index(name = "idx_lecture_createdat", columnList = "createdAt DESC, lecture_id DESC")
+    @Index(name = "idx_lecture_status_createdat", columnList = "status, createdAt, lecture_id DESC"),
+    @Index(name = "idx_lecture_createdat", columnList = "createdAt DESC, lecture_id DESC")
 })
 public class Lecture extends BaseEntity {
 
@@ -49,16 +51,19 @@ public class Lecture extends BaseEntity {
 
     public void validateOccupancy() {
         if (this.status != LectureStatus.OPEN) {
-            throw new IllegalStateException("수강 신청이 불가능한 강의 상태입니다.");
+            throw new BusinessException(ErrorCode.INVALID_LECTURE_STATUS);
         }
         if (this.currentEnrollmentCount >= this.maxCapacity) {
-            throw new IllegalStateException("수강 정원이 초과되었습니다.");
+            throw new BusinessException(ErrorCode.LECTURE_CAPACITY_EXCEEDED);
         }
     }
 
     public void validateRelease() {
+        if (this.status != LectureStatus.OPEN) {
+            throw new BusinessException(ErrorCode.INVALID_LECTURE_STATUS);
+        }
         if (this.currentEnrollmentCount <= 0) {
-            throw new IllegalStateException("취소할 수강 내역이 없습니다.");
+            throw new BusinessException("취소할 수강 내역이 없습니다.", ErrorCode.INVALID_INPUT_VALUE);
         }
     }
 

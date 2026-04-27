@@ -14,10 +14,6 @@ import org.springframework.data.jpa.repository.Lock;
 import java.util.Optional;
 
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
-    
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT l FROM Lecture l WHERE l.id = :id")
-    Optional<Lecture> findByIdWithLock(@Param("id") Long id);
 
     Page<Lecture> findByStatus(LectureStatus status, Pageable pageable);
 

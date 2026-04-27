@@ -8,6 +8,9 @@ import com.liveklass.domain.enrollment.Enrollment;
 import com.liveklass.domain.lecture.Lecture;
 import com.liveklass.domain.lecture.LectureStatus;
 import com.liveklass.domain.member.Member;
+import com.liveklass.exception.BusinessException;
+import com.liveklass.exception.EntityNotFoundException;
+import com.liveklass.exception.ErrorCode;
 import com.liveklass.repository.enrollment.EnrollmentRepository;
 import com.liveklass.repository.lecture.LectureRepository;
 import com.liveklass.repository.member.MemberRepository;
@@ -16,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -59,19 +61,16 @@ public class LectureService {
 
     public LectureDetailResponse getLecture(final Long lectureId) {
         Lecture lecture = lectureRepository.findById(lectureId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
         return new LectureDetailResponse(lecture);
     }
 
-    /*
-        todo: 코드 최적화 필요
-     */
     public Page<LectureStudentResponse> getLectureStudents(final Long creatorId, final Long lectureId, final Pageable pageable) {
         Lecture lecture = lectureRepository.findById(lectureId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
 
         if (!lecture.getCreatorId().equals(creatorId)) {
-            throw new IllegalStateException("해당 강의의 크리에이터만 수강생 목록을 조회할 수 있습니다.");
+            throw new BusinessException(ErrorCode.NOT_LECTURE_CREATOR);
         }
 
         Page<Enrollment> enrollmentPage = enrollmentRepository.findByLectureId(lectureId, pageable);
@@ -81,11 +80,8 @@ public class LectureService {
                 .map(Enrollment::getMemberId)
                 .collect(Collectors.toSet());
 
-        Map<Long, Member> memberMap = memberRepository.findAllById(memberIds)
-                .stream()
-                .collect(
-                        Collectors.toMap(Member::getId, member -> member)
-                );
+        Map<Long, Member> memberMap = memberRepository.findAllById(memberIds).stream()
+                .collect(Collectors.toMap(Member::getId, member -> member));
 
         List<LectureStudentResponse> responses = enrollments.stream()
                 .map(enrollment -> {
@@ -97,13 +93,13 @@ public class LectureService {
         return new PageImpl<>(responses, pageable, enrollmentPage.getTotalElements());
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void occupySlot(final Long lectureId) {
         int updatedCount = lectureRepository.incrementEnrollmentIfPossible(lectureId);
 
         if (updatedCount == 0) {
             Lecture lecture = lectureRepository.findById(lectureId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+                    .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
             lecture.validateOccupancy();
         }
     }
@@ -114,7 +110,7 @@ public class LectureService {
 
         if (updatedCount == 0) {
             Lecture lecture = lectureRepository.findById(lectureId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
+                    .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
             lecture.validateRelease();
         }
     }

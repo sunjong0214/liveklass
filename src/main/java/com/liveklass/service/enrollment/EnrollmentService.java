@@ -4,9 +4,11 @@ import com.liveklass.controller.enrollment.dto.EnrollmentResponse;
 import com.liveklass.domain.enrollment.Enrollment;
 import com.liveklass.domain.enrollment.EnrollmentStatus;
 import com.liveklass.domain.enrollment.Waitlist;
+import com.liveklass.exception.BusinessException;
+import com.liveklass.exception.EntityNotFoundException;
+import com.liveklass.exception.ErrorCode;
 import com.liveklass.repository.enrollment.EnrollmentRepository;
 import com.liveklass.repository.enrollment.WaitlistRepository;
-import com.liveklass.repository.lecture.LectureRepository;
 import com.liveklass.service.lecture.LectureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,27 +26,26 @@ public class EnrollmentService {
 
     private final EnrollmentRepository enrollmentRepository;
     private final WaitlistRepository waitlistRepository;
-    private final LectureRepository lectureRepository;
     private final LectureService lectureService;
 
     @Transactional
     public Long enroll(final Long memberId, final Long lectureId) {
         try {
             lectureService.occupySlot(lectureId);
-            return saveEnrollment(memberId, lectureId).getId();
-        } catch (IllegalStateException e) {
-            if (e.getMessage().equals("수강 정원이 초과되었습니다.")) {
+            return saveEnrollment(memberId, lectureId, EnrollmentStatus.PENDING).getId();
+        } catch (BusinessException e) {
+            if (e.getErrorCode() == ErrorCode.LECTURE_CAPACITY_EXCEEDED) {
                 return addToWaitlist(memberId, lectureId);
             }
             throw e;
         }
     }
 
-    private Enrollment saveEnrollment(Long memberId, Long lectureId) {
+    private Enrollment saveEnrollment(Long memberId, Long lectureId, EnrollmentStatus status) {
         Enrollment enrollment = Enrollment.builder()
                 .memberId(memberId)
                 .lectureId(lectureId)
-                .status(EnrollmentStatus.PENDING)
+                .status(status)
                 .enrolledAt(LocalDateTime.now())
                 .build();
         return enrollmentRepository.save(enrollment);
@@ -52,7 +53,7 @@ public class EnrollmentService {
 
     private Long addToWaitlist(Long memberId, Long lectureId) {
         if (waitlistRepository.existsByMemberIdAndLectureId(memberId, lectureId)) {
-            throw new IllegalStateException("이미 대기열에 등록된 강의입니다.");
+            throw new BusinessException("이미 대기열에 등록된 강의입니다.", ErrorCode.INVALID_INPUT_VALUE);
         }
         Waitlist waitlist = new Waitlist(memberId, lectureId);
         return waitlistRepository.save(waitlist).getId();
@@ -61,14 +62,14 @@ public class EnrollmentService {
     @Transactional
     public void confirmPayment(final Long enrollmentId) {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수강 신청 내역입니다."));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.ENROLLMENT_NOT_FOUND));
         enrollment.confirm();
     }
 
     @Transactional
     public void cancelEnrollment(final Long enrollmentId) {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수강 신청 내역입니다."));
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.ENROLLMENT_NOT_FOUND));
 
         enrollment.cancel();
 
@@ -82,7 +83,7 @@ public class EnrollmentService {
     }
 
     private void promoteFromWaitlist(Waitlist waitlist) {
-        saveEnrollment(waitlist.getMemberId(), waitlist.getLectureId());
+        saveEnrollment(waitlist.getMemberId(), waitlist.getLectureId(), EnrollmentStatus.PENDING);
         waitlistRepository.delete(waitlist);
     }
 
