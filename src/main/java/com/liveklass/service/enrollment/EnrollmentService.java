@@ -12,6 +12,7 @@ import com.liveklass.repository.enrollment.WaitlistRepository;
 import com.liveklass.repository.member.MemberRepository;
 import com.liveklass.service.lecture.LectureService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,13 +35,12 @@ public class EnrollmentService {
     public Long enroll(final Long memberId, final Long lectureId) {
         validateMember(memberId);
 
-        if (enrollmentRepository.findByMemberIdAndLectureIdAndStatusNot(memberId, lectureId, EnrollmentStatus.CANCELLED).isPresent()) {
-            throw new BusinessException("이미 수강 신청된 강의입니다.", ErrorCode.INVALID_INPUT_VALUE);
-        }
-
         try {
             lectureService.occupySlot(lectureId);
             return saveEnrollment(memberId, lectureId, EnrollmentStatus.PENDING).getId();
+        } catch (DataIntegrityViolationException e) {
+            // 유니크 제약 위반 → 중복 신청 (동시성 방어)
+            throw new BusinessException("이미 수강 신청된 강의입니다.", ErrorCode.INVALID_INPUT_VALUE);
         } catch (BusinessException e) {
             if (e.getErrorCode() == ErrorCode.LECTURE_CAPACITY_EXCEEDED) {
                 return addToWaitlist(memberId, lectureId);
@@ -63,8 +63,12 @@ public class EnrollmentService {
         if (waitlistRepository.existsByMemberIdAndLectureId(memberId, lectureId)) {
             throw new BusinessException("이미 대기열에 등록된 강의입니다.", ErrorCode.INVALID_INPUT_VALUE);
         }
-        Waitlist waitlist = new Waitlist(memberId, lectureId);
-        return waitlistRepository.save(waitlist).getId();
+        try {
+            Waitlist waitlist = new Waitlist(memberId, lectureId);
+            return waitlistRepository.save(waitlist).getId();
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException("이미 대기열에 등록된 강의입니다.", ErrorCode.INVALID_INPUT_VALUE);
+        }
     }
 
     @Transactional

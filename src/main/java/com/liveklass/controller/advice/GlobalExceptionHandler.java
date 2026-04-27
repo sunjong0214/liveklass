@@ -46,6 +46,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * DB 제약조건 위반 처리 (중복 신청 등)
+     */
+    @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    protected ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(org.springframework.dao.DataIntegrityViolationException e) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.builder()
+                        .status(org.springframework.http.HttpStatus.BAD_REQUEST.value())
+                        .code(ErrorCode.INVALID_INPUT_VALUE.getCode())
+                        .message("이미 신청되었거나 처리 중인 요청입니다.")
+                        .build());
+    }
+
+    /**
      * 그 외 잡히지 않은 모든 예외 처리
      */
     @ExceptionHandler(Exception.class)
