@@ -37,6 +37,9 @@ public class LectureService {
 
     @Transactional
     public Long createLecture(final Long creatorId, final LectureCreateRequest request) {
+        if (!memberRepository.existsById(creatorId)) {
+            throw new EntityNotFoundException(ErrorCode.MEMBER_NOT_FOUND);
+        }
         Lecture lecture = Lecture.builder()
                 .creatorId(creatorId)
                 .title(request.getTitle())
@@ -66,6 +69,9 @@ public class LectureService {
     }
 
     public Page<LectureStudentResponse> getLectureStudents(final Long creatorId, final Long lectureId, final Pageable pageable) {
+        if (!memberRepository.existsById(creatorId)) {
+            throw new EntityNotFoundException(ErrorCode.MEMBER_NOT_FOUND);
+        }
         Lecture lecture = lectureRepository.findById(lectureId)
                 .orElseThrow(() -> new EntityNotFoundException(ErrorCode.LECTURE_NOT_FOUND));
 

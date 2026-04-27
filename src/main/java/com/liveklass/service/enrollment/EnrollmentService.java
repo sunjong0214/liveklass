@@ -9,6 +9,7 @@ import com.liveklass.exception.EntityNotFoundException;
 import com.liveklass.exception.ErrorCode;
 import com.liveklass.repository.enrollment.EnrollmentRepository;
 import com.liveklass.repository.enrollment.WaitlistRepository;
+import com.liveklass.repository.member.MemberRepository;
 import com.liveklass.service.lecture.LectureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,10 +27,12 @@ public class EnrollmentService {
 
     private final EnrollmentRepository enrollmentRepository;
     private final WaitlistRepository waitlistRepository;
+    private final MemberRepository memberRepository;
     private final LectureService lectureService;
 
     @Transactional
     public Long enroll(final Long memberId, final Long lectureId) {
+        validateMember(memberId);
         try {
             lectureService.occupySlot(lectureId);
             return saveEnrollment(memberId, lectureId, EnrollmentStatus.PENDING).getId();
@@ -88,7 +91,14 @@ public class EnrollmentService {
     }
 
     public Page<EnrollmentResponse> getMyEnrollments(final Long memberId, final Pageable pageable) {
+        validateMember(memberId);
         return enrollmentRepository.findByMemberId(memberId, pageable)
                 .map(EnrollmentResponse::new);
+    }
+
+    private void validateMember(final Long memberId) {
+        if (!memberRepository.existsById(memberId)) {
+            throw new EntityNotFoundException(ErrorCode.MEMBER_NOT_FOUND);
+        }
     }
 }
